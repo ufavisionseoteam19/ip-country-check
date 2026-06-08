@@ -1,50 +1,48 @@
 # ip-country-check
 
-ใส่เลข IP → บอก **ประเทศ / เมือง / ISP** แล้วเซฟผลเป็นไฟล์ เรียงตามประเทศ ด้วย Bash
+ใส่เลข IP → บอก **ประเทศ / เมือง / ISP** แสดงตารางบนจอ + เซฟไฟล์ เรียงตามประเทศ ด้วย Bash
 
-รับได้ทั้ง **ใส่ IP ตรงๆ** (ทีละตัว/หลายตัว) หรือ **อ่านจากไฟล์/CSV** (เช่น ผลจาก ip-count-check)
+รับได้ทั้ง **ใส่ IP ตรงๆ** (ทีละตัว/หลายตัว) หรือ **อ่านจากไฟล์/CSV**
 
-> ใช้ API ฟรี `ip-api.com` ไม่ต้องติดตั้งอะไร ไม่ต้องสมัคร
-
----
-
-## ทำไมต้องมีตัวนี้
-
-ตอนเจอ IP ต้องสงสัยที่ยิงเข้ามาเยอะ คำถามแรกคือ "มาจากไหน?" — IP จาก datacenter ต่างประเทศมักเป็น bot/scraper ส่วน IP เน็ตบ้าน/มือถือในไทยมักเป็นคนจริง
-
-สคริปต์นี้ช่วยแยกแยะก่อนตัดสินใจบล็อก: บอกประเทศ + ISP ว่าเป็น cloud (น่าจะ bot) หรือ ISP ผู้ใช้ทั่วไป (คนจริง) แล้วเซฟผลเรียงตามประเทศให้อ่านง่าย
+> ใช้ API ฟรี `ip-api.com` ไม่ต้องติดตั้งอะไร
 
 ---
 
 ## คุณสมบัติ
 
 - ใส่ IP ตรงๆ ได้ทั้งตัวเดียวและหลายตัว
-- อ่านจากไฟล์/CSV ได้ (ดึงเฉพาะ IP ที่ถูกต้อง ข้ามหัวตาราง/คอลัมน์อื่นอัตโนมัติ)
+- อ่านจากไฟล์/CSV ได้ (ดึงเฉพาะ IP ที่ถูกต้อง ข้ามหัวตารางอัตโนมัติ)
 - แสดง ประเทศ + รหัสประเทศ + เมือง + ISP
-- เซฟผลเป็นไฟล์ `/root/รายชื่อ.txt` เรียงตามประเทศ (ทับชื่อเดิม ไม่สร้างใหม่)
+- **แสดงตารางเต็มบนจอ + เซฟไฟล์ `/root/ip-country-check.txt`** (เรียงตามประเทศ, ทับชื่อเดิม)
 - แสดงสรุปจำนวน IP ต่อประเทศ
 - รองรับ IPv4 / IPv6
-- หน่วงเวลาอัตโนมัติกัน rate limit
 
 ---
 
 ## วิธีใช้
 
 ```bash
-# ตรวจ IP เดียว
-./ip-country-check.sh 38.190.100.105
+# ตรวจ IP เดียว / หลายตัว
+./ip-country-check.sh 38.190.100.105 152.42.205.29
 
-# ตรวจหลาย IP พร้อมกัน
-./ip-country-check.sh 38.190.100.105 152.42.205.29 1.47.193.250
-
-# อ่านจาก CSV (วาง IP ในไฟล์ check-ip-list.csv)
+# อ่านจาก CSV
 ./ip-country-check.sh -f check-ip-list.csv
 
 # เทผลจาก ip-count-check มาตรวจประเทศ
 ./ip-country-check.sh -f /root/ip_count_all.txt
 
-# ดูผล
-cat /root/รายชื่อ.txt
+# ดูผลย้อนหลัง
+cat /root/ip-country-check.txt
+```
+
+### รันตรงจาก GitHub ไม่โหลดลง server
+
+```bash
+# ใส่ IP ตรงๆ
+curl -fsSL https://raw.githubusercontent.com/ufavisionseoteam19/ip-country-check/main/ip-country-check.sh | bash -s -- 38.190.100.105 152.42.205.29
+
+# อ่าน IP จาก CSV บน GitHub
+curl -fsSL https://raw.githubusercontent.com/ufavisionseoteam19/ip-country-check/main/ip-country-check.sh | bash -s -- $(curl -fsSL https://raw.githubusercontent.com/ufavisionseoteam19/ip-country-check/main/check-ip-list.csv | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
 ```
 
 ---
@@ -52,28 +50,27 @@ cat /root/รายชื่อ.txt
 ## รูปแบบไฟล์ CSV (check-ip-list.csv)
 
 ```
-ip,note
-38.190.100.105,brute force wp-login
-152.42.205.29,VisionCheck ลูกค้า
-58.8.140.171,
+ip
+38.190.100.105
+152.42.205.29
+58.8.140.171
 ```
 
-- คอลัมน์ `ip` = IP ที่จะเช็ค
-- คอลัมน์ `note` = โน้ตของคุณเอง (script ไม่อ่าน ใส่กันลืมได้)
-- วาง IP ปนข้อความได้ — script ดึงเฉพาะ IP ที่ถูกต้องเอง
+บรรทัดแรก `ip` = หัวตาราง / ถัดมาวาง IP บรรทัดละ 1 ตัว
 
 ---
 
-## ตัวอย่างผลลัพธ์ (/root/รายชื่อ.txt)
+## ตัวอย่างผลลัพธ์ (แสดงบนจอ = เนื้อหาใน /root/ip-country-check.txt)
 
 ```
 ประเทศ             CC   IP                เมือง        ISP
-Singapore          SG   152.42.205.29     Singapore    DigitalOcean LLC
-Thailand           TH   1.47.193.250      Bangkok      TOT Public Company
-United States      US   38.190.100.105    Los Angeles  Cogent Communications
+Peru               PE   38.190.100.105    San Juan     Conex TV
+Singapore          SG   152.42.205.29     Singapore    DigitalOcean, LLC
+Singapore          SG   5.223.53.147      Singapore    Hetzner Online GmbH
+Thailand           TH   58.8.140.171      Bangkok      True Internet
 ```
 
-อ่านง่ายๆ: `cloud ISP` (DigitalOcean/AWS/Google) = มัก bot | `ISP เน็ตบ้าน/มือถือ` (TOT/AIS/True) = มักคนจริง
+`cloud ISP` (DigitalOcean/Hetzner/AWS) = มัก bot | `ISP เน็ตบ้าน/มือถือ` (True/TOT/AIS) = มักคนจริง
 
 ---
 
@@ -81,16 +78,8 @@ United States      US   38.190.100.105    Los Angeles  Cogent Communications
 
 | ตัวแปร | ค่าเริ่มต้น | คำอธิบาย |
 |---|---|---|
-| `OUT` | `/root/รายชื่อ.txt` | ไฟล์ผล (เปลี่ยนชื่อได้) |
-| `DELAY` | `1.4` | หน่วงเวลา (วินาที) กัน rate limit |
-
----
-
-## ข้อจำกัด
-
-- API ฟรีจำกัด ~45 IP/นาที — สคริปต์หน่วงเวลาให้แล้ว
-- ต้องให้ server ออกอินเทอร์เน็ตได้ (เรียก API ภายนอก)
-- ข้อมูลประเทศ/ISP เป็นค่าโดยประมาณจาก GeoIP
+| `OUT` | `/root/ip-country-check.txt` | ไฟล์ผล |
+| `DELAY` | `1.4` | หน่วงเวลากัน rate limit |
 
 ---
 
